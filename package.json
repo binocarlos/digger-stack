@@ -1,0 +1,28 @@
+{
+  "name": "digger-stack",
+  "version": "0.0.1",
+  "description": "A service map for a digger network",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "make test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/binocarlos/digger-stack.git"
+  },
+  "keywords": [
+    "digger"
+  ],
+  "author": "Kai Davenport",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/binocarlos/digger-stack/issues"
+  },
+  "dependencies": {
+    "js-yaml": "~2.1.0"
+  },
+  "devDependencies": {
+    "mocha": "~1.12.0",
+    "should": "~1.2.2"
+  }
+}

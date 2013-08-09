@@ -44,6 +44,15 @@ Stack.prototype.load = function(done){
     }
 
     self.config = doc;
+
+    for(var name in self.config.warehouses || {}){
+      self.emit('warehouse', name, self.config.warehouses[name]);
+    }
+
+    if(self.config.router){
+      self.emit('router', self.config.router);
+    }
+    
     done(null, doc);
   })
 }

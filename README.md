@@ -1,4 +1,7 @@
 digger-stack
 ============
 
-A service map for a digger network
+Code that knows how to boot digger in various ways.
+
+
+

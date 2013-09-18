@@ -11,15 +11,9 @@ module.exports = function(program){
 
   var is_digger = fs.existsSync(application_root + '/digger.yaml');
 
-
-
   wrench.mkdirSyncRecursive(build_root, 0777);
 
   var name = application_root.split('/').pop();
-  // the start of the environment
-  var default_env = {
-    DIGGER_STACK_ID:name + ':' + utils.littleid()
-  }
 
   // the things we should only have to boot once
   if(!fs.existsSync(build_root + '/services')){
@@ -27,21 +21,15 @@ module.exports = function(program){
   }
 
   // stack wide environment variables written one value per named file
+  /*
   if(!fs.existsSync(build_root + '/env')){
     wrench.mkdirSyncRecursive(build_root + '/env', 0777);
   }
+  */
 
   if(!fs.existsSync(build_root + '/nodes')){
     wrench.mkdirSyncRecursive(build_root + '/nodes', 0777);
   }
-
-  for(var prop in default_env){
-    if(!fs.existsSync(build_root + '/env/' + prop)){
-      fs.writeFileSync(build_root + '/env/' + prop, default_env[prop], 'utf8');
-      process.env[prop] = default_env[prop];
-    }
-  }
-
 
   function build_digger(){
     var stack_config = Config(application_root);

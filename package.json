@@ -30,7 +30,8 @@
     "ejs": "~0.8.4",
     "goauth": "~0.0.1",
     "async": "~0.2.9",
-    "wrench": "~1.5.1"
+    "wrench": "~1.5.1",
+    "digger-mailgun": "0.0.1"
   },
   "devDependencies": {
     "mocha": "~1.12.0",

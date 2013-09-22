@@ -35,7 +35,7 @@ module.exports = function(program){
   reception.on('digger:warehouse', function(req, res){
 
     process.nextTick(function(){
-      warehouses(req, function(error, results){        
+      warehouses(req, function(error, results){
         res(error, results)
       });
     })
@@ -46,5 +46,9 @@ module.exports = function(program){
     
   })
 
+  // a client wants to use the radio
+  app.on('digger:radio', function(action, channel, body){
+
+  })
 
 }

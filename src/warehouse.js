@@ -56,7 +56,7 @@ function make_warehouse($digger, id){
   var logger = require('./logger');
   var utils = require('digger-utils');
   var EventEmitter = require('events').EventEmitter;
-
+  var fs = require('fs');
   var stack_config = $digger.stack_config;
   var warehouses = stack_config.warehouses || {};
 
@@ -150,7 +150,7 @@ function make_warehouse($digger, id){
     if(typeof(handler.on)==='function'){
       handler.on('digger:action', function(type, packet){
         logger.action(type, packet);
-        warehouse_handler.emit('action', type, packet);
+        warehouse_handler.emit('digger:radio', type, packet);
       })
     }
 
@@ -189,7 +189,10 @@ function make_warehouse($digger, id){
   function process_warehouse(warehouse){
     var module = warehouse.module;
     if(!module.match(/\./)){
-      module = 'warehouses/' + module;
+      // this means it is a core module
+      if(fs.existsSync(__dirname + '/modules/warehouses/' + module + '.js')){
+        module = 'warehouses/' + module;
+      }
     }
     else{
       module = stack_config.application_root + '/' + module;

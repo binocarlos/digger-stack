@@ -27,7 +27,7 @@ module.exports = function(config, $digger){
 			load the user based on the username -> id
 			
 		*/
-		userwarehouse('user[username=' + username + ']')
+		userwarehouse('[username=' + username + ']')
 			.ship(function(user){
 				if(user.isEmpty()){
 					callback('no user found');
@@ -74,6 +74,7 @@ module.exports = function(config, $digger){
 	auth.on('login', function(data, callback){
 
 		load_user(data.username, function(error, user){
+			
 			if(error || !user || user.attr('_password')!=data.password){
 				callback('invalid details');
 			}

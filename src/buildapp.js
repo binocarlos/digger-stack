@@ -31,6 +31,11 @@ module.exports = function(program){
     wrench.mkdirSyncRecursive(build_root + '/nodes', 0777);
   }
 
+  /*
+  
+    we are building a digger application
+    
+  */
   function build_digger(){
     var stack_config = Config(application_root);
 

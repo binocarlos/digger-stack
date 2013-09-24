@@ -10,9 +10,9 @@ function build_middleware($digger, modulename, middleware_config){
   }, true);
 }
 
+function makemodule($digger, middleware_settings){
 
-
-function makemiddleware($digger, route, middleware_settings){
+  var fs = require('fs');
 
   if(typeof(middleware_settings)==='string'){
     middleware_settings = {
@@ -21,7 +21,6 @@ function makemiddleware($digger, route, middleware_settings){
   }
 
   var middleware_config = middleware_settings.config || {};
-  middleware_config.id = route;
   
   var module = middleware_settings.module;
 
@@ -30,40 +29,64 @@ function makemiddleware($digger, route, middleware_settings){
     process.exit();
   }
 
-  var fs = require('fs');
+  var app_path = $digger.filepath(module);
 
-  if(module.match(/[\/\.]/)){
+  try{
+    var stat = fs.statSync(app_path);
+  } catch (e){
+    stat = null;
+  }
 
-    module = $digger.filepath(module);
-    
-    if(module.match(/\.js$/)){
-      return build_middleware($digger, module, middleware_config);
-    }
-    else{
-      var files = fs.readdirSync($digger.filepath(module)) || [];
+  if(!stat){
+    return build_middleware($digger, 'middleware/' + module, middleware_config);
+  }
+  else if(stat.isDirectory()){
+    var handlers = {};
 
-      return files.map(function(file){
-        var useroute = route + '/' + (file.replace(/\.js$/, ''));
+    var files = fs.readdirSync(app_path);
 
-        return {
-          route:useroute,
-          fn:build_middleware($digger, module + '/' + file, middleware_config)
-        }
-      })
+    files.forEach(function(file){
+
+      if(file.match(/\.js$/)){
+        handlers[file] = build_middleware($digger, app_path + '/' + file, middleware_config);  
+      }
+
+      
+    })
+
+    return {
+      type:'folder',
+      handlers:handlers
     }
   }
   else{
-    return build_middleware($digger, 'middleware/' + module, middleware_config);
+    return build_middleware($digger, app_path, middleware_config);
   }
 }
 
 function get_middleware_array($digger, middleware){
   var utils = require('digger-utils');
   var stack = [];
-  for(var route in middleware){
-    var fn = makemiddleware($digger, route, middleware[route]);
-    if(utils.isArray(fn)){
-      stack = stack.concat(fn);
+
+  for(var route in middleware){   
+    var fn = makemodule($digger, middleware[route]);
+
+    // we have a collection of middleware indexed by filename
+    if(fn.type=='folder'){
+      var handlers = fn.handlers;
+      stack.push({
+        route:route,
+        fn:function(req, res, next){
+          var file = req.url.replace(/^\//, '');
+          var handler = handlers[file];
+          if(!handler){
+            next();
+          }
+          else{
+            handler(req, res, next);
+          }
+        }
+      })
     }
     else{
       stack.push({
@@ -73,6 +96,7 @@ function get_middleware_array($digger, middleware){
     }
     
   }
+
   return stack;
 }
 
@@ -84,8 +108,8 @@ module.exports = function($digger, id){
   var diggerserver = Serve();	
   var diggerapp = diggerserver.app;
 
-  $digger.digger_middleware = function(){
-    return diggerserver.digger_middleware.apply(diggerserver, utils.toArray(arguments));
+  $digger.digger_express = function(){
+    return diggerserver.digger_express.apply(diggerserver, utils.toArray(arguments));
   }
 
 	/*
@@ -93,7 +117,6 @@ module.exports = function($digger, id){
 		sort out what apps to boot
 		
 	*/
-
 	var appconfigs = $digger.stack_config.apps || {};
 
   // the array of apps we will run
@@ -140,7 +163,52 @@ module.exports = function($digger, id){
       $digger.filepath(app_config.document_root) :
       $digger.filepath(__dirname + '/../assets/www')
 
-    diggerserver.digger_application(domains, document_root, middleware);
+    var app = diggerserver.digger_application(domains);
+
+    // gzip output
+    app.use(diggerserver.express.compress());
+    
+    // we serve the website files first to avoid there being a redis session for every png
+    diggerapp.use(diggerserver.express.static(document_root));
+
+    var views = app_config.views;
+
+    if(views){
+      var view_root = $digger.filepath(app_config.views);
+
+      var engine = require('ejs-locals');
+
+      app.engine('ejs', engine);
+      app.set('view engine', 'ejs');
+      app.set('views', view_root);
+    }
+
+    var routes = app_config.routes;
+
+    if(routes){
+
+      var routesfn = makemodule($digger, routes);
+
+      // a folder of routes to loop over
+      if(routesfn.type=='folder'){
+        for(var file in routesfn.handlers){
+          var handler = routesfn.handlers[file];
+          handler(diggerapp);
+        }
+      }
+      // a single fn to run
+      else{
+        routesfn(diggerapp);
+      }
+    }
+
+    // mount middleware
+    middleware.forEach(function(warez){
+      diggerapp.use(warez.route, warez.fn);
+    })
+
+    diggerapp.use(diggerapp.router);
+    
 	})
 
 	diggerserver.listen($digger.runtime.http_port, function(){

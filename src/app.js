@@ -168,8 +168,9 @@ module.exports = function($digger, id){
     // gzip output
     app.use(diggerserver.express.compress());
     
+    console.log('   document_root: ' + document_root);
     // we serve the website files first to avoid there being a redis session for every png
-    diggerapp.use(diggerserver.express.static(document_root));
+    app.use(diggerserver.express.static(document_root));
 
     var views = app_config.views;
 
@@ -204,11 +205,10 @@ module.exports = function($digger, id){
 
     // mount middleware
     middleware.forEach(function(warez){
-      diggerapp.use(warez.route, warez.fn);
+      app.use(warez.route, warez.fn);
     })
 
-    diggerapp.use(diggerapp.router);
-    
+    app.use(app.router);
 	})
 
 	diggerserver.listen($digger.runtime.http_port, function(){

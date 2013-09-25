@@ -104,6 +104,7 @@ module.exports = function($digger, id){
 
   var Serve = require('digger-serve');
   var utils = require('digger-utils');
+  var less = require('connect-less');
 
   var diggerserver = Serve();	
   var diggerapp = diggerserver.app;
@@ -167,6 +168,10 @@ module.exports = function($digger, id){
 
     // gzip output
     app.use(diggerserver.express.compress());
+    // less compiler
+    app.use(less({
+      src:document_root
+    }))
     
     console.log('   document_root: ' + document_root);
     // we serve the website files first to avoid there being a redis session for every png

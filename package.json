@@ -32,7 +32,8 @@
     "async": "~0.2.9",
     "wrench": "~1.5.1",
     "digger-mailgun": "0.0.1",
-    "ejs-locals": "~1.0.2"
+    "ejs-locals": "~1.0.2",
+    "connect-less": "~0.3.1"
   },
   "devDependencies": {
     "mocha": "~1.12.0",

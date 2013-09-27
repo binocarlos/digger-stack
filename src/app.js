@@ -48,7 +48,8 @@ function makemodule($digger, middleware_settings){
     files.forEach(function(file){
 
       if(file.match(/\.js$/)){
-        handlers[file] = build_middleware($digger, app_path + '/' + file, middleware_config);  
+        var name = file.replace(/\.js/, '');
+        handlers[name] = build_middleware($digger, app_path + '/' + file, middleware_config);  
       }
 
       

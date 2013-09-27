@@ -28,7 +28,7 @@
     "digger-warehouse": "~0.1.0",
     "js-yaml": "~2.1.0",
     "ejs": "~0.8.4",
-    "goauth": "~0.0.1",
+    "goauth": "~0.0.10",
     "async": "~0.2.9",
     "wrench": "~1.5.1",
     "digger-mailgun": "0.0.1",

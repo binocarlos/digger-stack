@@ -226,6 +226,10 @@ module.exports = function($digger, id){
     $digger.emit('digger:request', req, reply);
   })
 
+  diggerserver.on('digger:radio', function(action, channel, body){
+    $digger.emit('digger:radio', action, channel, body);
+  })
+
   return diggerserver;
 
 }

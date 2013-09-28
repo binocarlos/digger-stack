@@ -150,7 +150,10 @@ function make_warehouse($digger, id){
     if(typeof(handler.on)==='function'){
       handler.on('digger:action', function(type, packet){
         logger.action(type, packet);
-        warehouse_handler.emit('digger:radio', type, packet);
+        if(type!='select'){
+          warehouse_handler.emit('digger:radio', type, packet);  
+        }
+        
       })
     }
 

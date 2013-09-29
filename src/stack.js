@@ -8,6 +8,7 @@ module.exports = function(program){
   var Radio = require('digger-radio')
   var Digger = require('./digger');
   var App = require('./app');
+  var logger = require('./logger');
 
   var $digger = Digger(program);
   var config = $digger.stack_config;
@@ -60,12 +61,9 @@ module.exports = function(program){
     we are always writing to the radio from here
     
   */
-  warehouses.on('digger:radio', function(type, packet){
-    console.log('-------------------------------------------');
-    console.log('-------------------------------------------');
-    console.log('warehouse radio');
-    console.dir(type);
-    console.dir(packet);
+  warehouses.on('digger:radio', function(channel, body){
+    fake_radio.receive(channel, body);
+    logger.radio('talk', channel);
   })
 
   /*
@@ -82,12 +80,14 @@ module.exports = function(program){
   $digger.on('digger:radio', function(action, channel, body){
     if(action=='listen'){
       fake_radio.listen(channel, body);
+      logger.radio('listen', channel);
     }
     else if(action=='cancel'){
       fake_radio.cancel(channel, body); 
     }
     else if(action=='talk'){
       fake_radio.receive(channel, body);
+      logger.radio('talk', channel);
     }
   })
 }

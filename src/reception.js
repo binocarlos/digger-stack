@@ -81,7 +81,7 @@ function make_reception($digger){
     if(router){
       router(req, function(error, answer){
         if(error){
-          logger.error(error);  
+          logger.error(error);
         }
         reply(error, answer);
       }, function(){

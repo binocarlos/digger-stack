@@ -148,10 +148,56 @@ function make_warehouse($digger, id){
     console.log('          module: ' + route + ' -> ' + modulename);
 
     if(typeof(handler.on)==='function'){
-      handler.on('digger:action', function(type, packet){
+      handler.on('digger:action', function(type, packet, results){
+        packet.action = type;
         logger.action(type, packet);
-        if(type!='select'){
-          warehouse_handler.emit('digger:radio', type, packet);  
+        if(type=='append'){
+          var context = packet.context;
+          var channel = packet.headers['x-supplier-route'];
+
+          channel = channel.replace(/^\//, '').replace(/\//g, '.');
+
+          if(context){
+            var digger = context._digger || {};
+            if(digger.treepath){
+              channel += '.' + digger.treepath;
+            }
+          }
+
+          warehouse_handler.emit('digger:radio', channel, packet);
+        }
+        else if(type=='save'){
+          var item = packet.body;
+
+          var channel = packet.headers['x-supplier-route'];
+
+          channel = channel.replace(/^\//, '').replace(/\//g, '.');
+
+          if(item){
+            var digger = item._digger || {};
+            if(digger.treepath){
+              channel += '.' + digger.treepath;
+            }
+          }
+          
+          warehouse_handler.emit('digger:radio', channel, packet);
+        }
+        else if(type=='remove'){
+          results = results || [];
+          var item = results[0];
+
+          var channel = packet.headers['x-supplier-route'];
+
+          channel = channel.replace(/^\//, '').replace(/\//g, '.');
+
+          if(item){
+            var digger = item._digger || {};
+            if(digger.treepath){
+              channel += '.' + digger.treepath;
+            }
+          }
+          packet.body = results;
+          warehouse_handler.emit('digger:radio', channel, packet);
         }
         
       })

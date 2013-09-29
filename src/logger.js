@@ -61,6 +61,16 @@ function reception_results_logger(req, count){
   logger(parts);
 }
 
+function radio_logger(action, channel){
+  var parts = [
+    new Date().getTime(),
+    'radio',
+    action,
+    channel
+  ]
+  logger(parts);
+}
+
 function error_logger(req, error){
   var parts = [
     new Date().getTime(),
@@ -138,6 +148,7 @@ function request_logger(req){
 module.exports = {
   array:logger,
   error:error_logger,
+  radio:radio_logger,
   reception_error:reception_error_logger,
   reception_results:reception_results_logger,
   action:action_logger,

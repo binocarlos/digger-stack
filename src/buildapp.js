@@ -1,4 +1,4 @@
-module.exports = function(program){
+module.exports = function(program, done){
 	var fs = require('fs');
 	var path = require('path');
 	var tools = require('./tools');
@@ -19,13 +19,6 @@ module.exports = function(program){
   if(!fs.existsSync(build_root + '/services')){
     wrench.mkdirSyncRecursive(build_root + '/services', 0777);
   }
-
-  // stack wide environment variables written one value per named file
-  /*
-  if(!fs.existsSync(build_root + '/env')){
-    wrench.mkdirSyncRecursive(build_root + '/env', 0777);
-  }
-  */
 
   if(!fs.existsSync(build_root + '/nodes')){
     wrench.mkdirSyncRecursive(build_root + '/nodes', 0777);

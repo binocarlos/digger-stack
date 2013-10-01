@@ -201,6 +201,7 @@ module.exports = function($digger, id){
       if(routesfn.type=='folder'){
         for(var file in routesfn.handlers){
           var handler = routesfn.handlers[file];
+
           handler(app);
         }
       }

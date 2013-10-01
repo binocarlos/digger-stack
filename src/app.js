@@ -107,6 +107,7 @@ module.exports = function($digger, id){
   var utils = require('digger-utils');
   var less = require('connect-less');
 
+
   var diggerserver = Serve();	
   var diggerapp = diggerserver.app;
 
@@ -165,31 +166,31 @@ module.exports = function($digger, id){
       $digger.filepath(app_config.document_root) :
       $digger.filepath(__dirname + '/../assets/www')
 
-    var app = diggerserver.digger_application(domains);
-
-    // gzip output
-    app.use(diggerserver.express.compress());
-    // less compiler
-    app.use(less({
-      src:document_root
-    }))
-    
-    console.log('   document_root: ' + document_root);
-    // we serve the website files first to avoid there being a redis session for every png
-    app.use(diggerserver.express.static(document_root));
-
     var views = app_config.views;
 
-    if(views){
+    var app = diggerserver.digger_application(domains, function(userapp){
+      
       var view_root = $digger.filepath(app_config.views);
 
-      var engine = require('ejs-locals');
+      if(views){
+        var engine = require('ejs-locals');
 
-      app.engine('ejs', engine);
-      app.set('view engine', 'ejs');
-      app.set('views', view_root);
-    }
+        userapp.set('views', view_root);
+        userapp.engine('html', engine);
+        userapp.set('view engine', 'html');
+      }
+      
+      // gzip output
+      userapp.use(diggerserver.express.compress());
+      // less compiler
+      userapp.use(less({
+        src:document_root
+      }))
+    });
 
+    console.log('   document_root: ' + document_root);
+
+    // do we have custom js routes?
     var routes = app_config.routes;
 
     if(routes){
@@ -200,21 +201,22 @@ module.exports = function($digger, id){
       if(routesfn.type=='folder'){
         for(var file in routesfn.handlers){
           var handler = routesfn.handlers[file];
-          handler(diggerapp);
+          handler(app);
         }
       }
       // a single fn to run
       else{
-        routesfn(diggerapp);
+        routesfn(app);
       }
     }
 
-    // mount middleware
+    // mount digger.yaml middleware
     middleware.forEach(function(warez){
       app.use(warez.route, warez.fn);
     })
 
     app.use(app.router);
+    app.use(diggerserver.express.static(document_root));
 	})
 
 	diggerserver.listen($digger.runtime.http_port, function(){

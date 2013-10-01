@@ -8,7 +8,7 @@ module.exports = function(program){
   var config_path = quarry_root + '/digger.json';
   var env_path = quarry_root + '/env';
 
-  if(!fs.existsSync(config_path)){
+  if(!fs.existsSync(quarry_root)){
     console.error('you need to run digger build first');
     process.exit(1);
   }

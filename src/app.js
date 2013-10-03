@@ -213,7 +213,17 @@ module.exports = function($digger, id){
 
     // mount digger.yaml middleware
     middleware.forEach(function(warez){
-      app.use(warez.route, warez.fn);
+
+      // this lets middleware look after their own mounting
+      // this is for the auth module because it uses it's mount path internally
+      // to derive the oauth callbacks
+      if(warez.fn._diggermount){
+        warez.fn._diggermount(app, warez.fn, warez.route);
+      }
+      // this means we are mounting the middleware based on the route in the digger.yaml
+      else{
+        app.use(warez.route, warez.fn);
+      }
     })
 
     app.use(app.router);

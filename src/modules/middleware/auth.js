@@ -43,6 +43,31 @@ module.exports = function(config, $digger){
 
 	/*
 	
+		load a user from a provider id
+		
+	*/
+	function load_provider_user(provider, id, callback){
+		/*
+		
+			load the user based on the username -> id
+			
+		*/
+		userwarehouse('[' + provider + '_id=' + id + ']')
+			.ship(function(user){
+				if(user.isEmpty()){
+					callback('no user found');
+				}
+				else{
+					callback(null, user);
+				}
+			})
+			.fail(function(error){
+				callback(error);
+			})
+	}	
+
+	/*
+	
 		insert a new user into the warehouse
 		
 	*/
@@ -99,13 +124,7 @@ module.exports = function(config, $digger){
 	})
 
 	auth.on('update', function(user, data, callback){
-		console.log('-------------------------------------------');
-		console.log('loading user');
 		load_user(user.username, function(error, user){
-
-			console.log('-------------------------------------------');
-			console.log('user loaded');
-			console.dir(error);
 
 			if(!user){
 				error = 'no user found';
@@ -120,9 +139,6 @@ module.exports = function(config, $digger){
 				user.attr(prop, data[prop]);
 			}
 
-			console.log('-------------------------------------------');
-			console.log('saving user');
-
 			user
 				.save()
 				.ship(function(){
@@ -134,6 +150,113 @@ module.exports = function(config, $digger){
 
 		})
 	})
+	
+	var extractors = {
+		github:function(data){
+			return {
+				name:data.name,
+				id:data.login,
+				image:data.avatar_url,
+				email:data.email
+			}
+		}
+	}
+
+	auth.on('connect', function(user, packet, callback){
+		
+		var data = packet.data;
+		var service = packet.service;
+
+		if(!extractors[service]){
+			callback(service + ' is an unknown provider');
+			return;
+		}
+
+		var diggeruser = extractors[service](data);
+
+		// already logged in
+		if(user){
+
+			var existingid = user._digger.diggerid;
+
+			load_provider_user(service, diggeruser.id, function(error, dbuser){
+
+				// we don't mind that here
+				if(error=='no user found'){
+					error = null;
+				}
+
+				if(error){
+					callback(error);
+					return;
+				}
+
+				// we know them
+				if(dbuser){
+					// but there is a crossed account
+					if(dbuser.diggerid()!=existingid){
+						callback('There is another account that is logged in with that ' + service + ' id');
+						return
+					}
+
+					callback(null, dbuser.get(0));
+				}
+				// a new service connecting to an existing account
+				else{
+
+					dbuser.attr(service + '_id', diggeruser.id);
+					dbuser.attr(service + '_user', diggeruser);
+					dbuser.attr(service + '_data', data);
+
+					dbuser.save().ship(function(){
+						callback(null, dbuser.get(0));
+					})
+				}
+
+			})
+
+			
+		}
+		// not logged in
+		else{
+
+			load_provider_user(service, diggeruser.id, function(error, dbuser){
+
+				// we don't mind that here
+				if(error=='no user found'){
+					error = null;
+				}
+				
+
+				if(error){
+					callback(error);
+					return;
+				}
+
+				// we know them
+				if(dbuser){
+					callback(null, dbuser.get(0));
+				}
+				else{
+
+					var createdata = {};
+
+					createdata[service + '_id'] = diggeruser.id;
+					createdata[service + '_user'] = diggeruser;
+					createdata[service + '_data'] = data;
+
+					create_user(createdata, function(error, dbuser){
+						callback(null, dbuser);
+					});
+				}
+				
+			})
+		}
+	})
+
+	auth._diggermount = function(app, fn, route){
+		app.use(fn);
+	}
 
 	return auth;
 }

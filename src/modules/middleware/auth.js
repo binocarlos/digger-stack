@@ -64,6 +64,31 @@ module.exports = function(config, $digger){
 			.fail(function(error){
 				callback(error);
 			})
+	}
+
+	/*
+	
+		load a user from a provider id
+		
+	*/
+	function load_id_user(id, callback){
+		/*
+		
+			load the user based on the username -> id
+			
+		*/
+		userwarehouse('=' + id)
+			.ship(function(user){
+				if(user.isEmpty()){
+					callback('no user found');
+				}
+				else{
+					callback(null, user);
+				}
+			})
+			.fail(function(error){
+				callback(error);
+			})
 	}	
 
 	/*
@@ -159,6 +184,20 @@ module.exports = function(config, $digger){
 				image:data.avatar_url,
 				email:data.email
 			}
+		},
+		dropbox:function(data){
+			return {
+				name:data.display_name,
+				id:data.uid,
+				email:data.email
+			}
+		},
+		google:function(data){
+			return {
+				name:data.name,
+				id:data.id,
+				image:data.picture
+			}
 		}
 	}
 
@@ -191,7 +230,7 @@ module.exports = function(config, $digger){
 					return;
 				}
 
-				// we know them
+				// we know them from this provider already
 				if(dbuser){
 					// but there is a crossed account
 					if(dbuser.diggerid()!=existingid){
@@ -199,23 +238,43 @@ module.exports = function(config, $digger){
 						return
 					}
 
-					callback(null, dbuser.get(0));
-				}
-				// a new service connecting to an existing account
-				else{
-
 					dbuser.attr(service + '_id', diggeruser.id);
 					dbuser.attr(service + '_user', diggeruser);
 					dbuser.attr(service + '_data', data);
+					dbuser.attr(service + '_tokens', {
+						token:packet.token,
+						refresh_token:packet.refresh_token
+					})
 
 					dbuser.save().ship(function(){
 						callback(null, dbuser.get(0));
 					})
 				}
+				// a new service connecting to an existing account
+				else{
 
+					// load the full user from the db
+					load_id_user(user._digger.diggerid, function(error, dbuser){
+						if(error || !dbuser){
+							callback('user logged in but no databases record found');
+							return;
+						}
+						dbuser.attr(service + '_id', diggeruser.id);
+						dbuser.attr(service + '_user', diggeruser);
+						dbuser.attr(service + '_data', data);
+						dbuser.attr(service + '_tokens', {
+							token:packet.token,
+							refresh_token:packet.refresh_token
+						})
+
+						dbuser.save().ship(function(){
+							callback(null, dbuser.get(0));
+						})
+					})
+
+					
+				}
 			})
-
-			
 		}
 		// not logged in
 		else{
@@ -226,7 +285,6 @@ module.exports = function(config, $digger){
 				if(error=='no user found'){
 					error = null;
 				}
-				
 
 				if(error){
 					callback(error);
@@ -235,7 +293,17 @@ module.exports = function(config, $digger){
 
 				// we know them
 				if(dbuser){
-					callback(null, dbuser.get(0));
+					dbuser.attr(service + '_id', diggeruser.id);
+					dbuser.attr(service + '_user', diggeruser);
+					dbuser.attr(service + '_data', data);
+					dbuser.attr(service + '_tokens', {
+						token:packet.token,
+						refresh_token:packet.refresh_token
+					})
+
+					dbuser.save().ship(function(){
+						callback(null, dbuser.get(0));
+					})
 				}
 				else{
 
@@ -244,6 +312,10 @@ module.exports = function(config, $digger){
 					createdata[service + '_id'] = diggeruser.id;
 					createdata[service + '_user'] = diggeruser;
 					createdata[service + '_data'] = data;
+					createdata[service + '_tokens'] = {
+						token:data.token,
+						refresh_token:data.refresh_token
+					}
 
 					create_user(createdata, function(error, dbuser){
 						callback(null, dbuser);

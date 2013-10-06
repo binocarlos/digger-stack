@@ -198,6 +198,20 @@ module.exports = function(config, $digger){
 				id:data.id,
 				image:data.picture
 			}
+		},
+		facebook:function(data){
+			return {
+				id:data.id,
+				name:data.name,
+				image:'http://graph.facebook.com/' + data.id + '/picture'
+			}
+		},
+		twitter:function(data){
+			return {
+				id:data.user_id,
+				image:'http://api.twitter.com/1/users/profile_image?size=bigger&screen_name=' + data.screen_name,
+				name:data.screen_name
+			}
 		}
 	}
 

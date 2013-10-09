@@ -34,7 +34,9 @@
     "digger-mailgun": "0.0.1",
     "connect-less": "~0.3.1",
     "digger-radio": "~0.0.1",
-    "ejs-locals": "~1.0.2"
+    "ejs-locals": "~1.0.2",
+    "hogan.js": "~2.0.0",
+    "xtend": "~2.1.1"
   },
   "devDependencies": {
     "mocha": "~1.12.0",

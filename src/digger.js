@@ -1,3 +1,9 @@
+/*
+
+  the server side digger build used by server scripts and modules
+  
+*/
+
 module.exports = function(program){
 
   var utils = require('digger-utils');

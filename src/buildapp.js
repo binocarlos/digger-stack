@@ -6,6 +6,8 @@ module.exports = function(program, done){
 	var wrench = require('wrench');
 	var utils = require('digger-utils');
 
+  var env = process.env.NODE_ENV;
+
 	var application_root = tools.application_root();
   var build_root = application_root + '/.quarry';
 
@@ -26,59 +28,73 @@ module.exports = function(program, done){
 
   /*
   
-    we are building a digger application
+    we are building a digger application with a digger.yaml
     
   */
   function build_digger(){
-    var stack_config = Config(application_root);
+    var stack_config_loader = Config(application_root);
 
-    for(var servicename in (stack_config.services|| {})){
-      if(!fs.existsSync(build_root + '/services/' + servicename)){
-        fs.writeFileSync(build_root + '/services/' + servicename, '', 'utf8');
+    stack_config_loader.load(function(error, stack_config){
+
+      if(error){
+        throw new Error(error);
       }
-    }
 
-    var allroutes = [];
-    for(var warehousename in (stack_config.warehouses || {})){
-      var app = stack_config.warehouses[warehousename];
-
-      allroutes.push(warehousename);
-
-      var nodename = warehousename.replace(/^\//, '').replace(/\//g, '_');
-
-      // this is for when we scale
-      /*
-      if(!fs.existsSync(build_root + '/nodes/' + nodename)){
-        fs.writeFileSync(build_root + '/nodes/' + nodename, 'digger warehouse ' + nodename, 'utf8');
+      for(var servicename in (stack_config.services|| {})){
+        if(!fs.existsSync(build_root + '/services/' + servicename)){
+          fs.writeFileSync(build_root + '/services/' + servicename, '', 'utf8');
+        }
       }
-      */
-    }
 
-    var alldomains = [];
+      var allroutes = [];
+      for(var warehousename in (stack_config.warehouses || {})){
+        var app = stack_config.warehouses[warehousename];
 
-    for(var i in (stack_config.apps || {})){
-      var app = stack_config.apps[i];
+        allroutes.push(warehousename);
 
-      (app.domains || []).forEach(function(domain){
-        alldomains.push(domain);
-      })
+        var nodename = warehousename.replace(/^\//, '').replace(/\//g, '_');
 
-      // this is for when we scale
-      /*
-      if(!fs.existsSync(build_root + '/nodes/' + app.id)){
-        fs.writeFileSync(build_root + '/nodes/' + app.id, 'digger warehouse ' + nodename, 'utf8');
+        // this is for when we scale
+        /*
+        if(!fs.existsSync(build_root + '/nodes/' + nodename)){
+          fs.writeFileSync(build_root + '/nodes/' + nodename, 'digger warehouse ' + nodename, 'utf8');
+        }
+        */
       }
-      */
-    }
 
-    // we want a blank line on the end because I am shit at bash scripts and it misses the last line
-    alldomains.push('');
-    fs.writeFileSync(build_root + '/domains', alldomains.join("\n") + "\n", 'utf8');
+      var alldomains = [];
 
-    fs.writeFileSync(build_root + '/nodes/all', 'digger run', 'utf8');
-    fs.writeFileSync(build_root + '/digger.json', JSON.stringify(stack_config, null, 4), 'utf8');
+      for(var i in (stack_config.apps || {})){
+        var app = stack_config.apps[i];
+
+        (app.domains || []).forEach(function(domain){
+          alldomains.push(domain);
+        })
+
+        // this is for when we scale
+        /*
+        if(!fs.existsSync(build_root + '/nodes/' + app.id)){
+          fs.writeFileSync(build_root + '/nodes/' + app.id, 'digger warehouse ' + nodename, 'utf8');
+        }
+        */
+      }
+
+      // we want a blank line on the end because I am shit at bash scripts and it misses the last line
+      alldomains.push('');
+      fs.writeFileSync(build_root + '/domains', alldomains.join("\n") + "\n", 'utf8');
+
+      fs.writeFileSync(build_root + '/nodes/all', 'digger run', 'utf8');
+      fs.writeFileSync(build_root + '/digger.json', JSON.stringify(stack_config, null, 4), 'utf8');
+    })
+
+    
   }
 
+  /*
+  
+    for a folder that does not have a digger.yaml
+    
+  */
   function build_app(){
     if(fs.existsSync(application_root + '/domains')){
       var domains = fs.readFileSync(application_root + '/domains', 'utf8');

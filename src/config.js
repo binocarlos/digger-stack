@@ -19,6 +19,8 @@ var fs = require('fs');
 var yaml = require('js-yaml');
 var wrench = require('wrench');
 var path = require('path');
+var hogan = require("hogan.js");
+var extend = require("xtend");
 
 /*
 
@@ -77,69 +79,93 @@ module.exports = function(application_root){
 		process.exit();
 	}
 
-	var apps = {};
-	var warehouses = {};
-	var reception = {};
-	var services = {
-		
-	};
+	function run_load(done){
 
-	function add_warehouse(id, config){
-		if(id=='/reception'){
-			reception = config;
+		var apps = {};
+		var warehouses = {};
+		var reception = {};
+		var services = {
+			
+		};
+
+		function add_warehouse(id, config){
+			if(id=='/reception'){
+				reception = config;
+			}
+			else{
+				warehouses[id] = config;
+				var addservices = warehouse_services(config);
+				for(var prop in addservices){
+					services[prop] = addservices[prop];
+				}
+			}
 		}
-		else{
-			warehouses[id] = config;
-			var addservices = warehouse_services(config);
+
+		function add_app(id, config){
+			apps[id] = config;
+
+			var addservices = app_services(config);
 			for(var prop in addservices){
 				services[prop] = addservices[prop];
 			}
+
+			/*
+			
+				check if there are overrides in the environment
+				
+			*/
+
+			var current_env = process.env.NODE_ENV;
+			var env_config = config.env ? config.env[current_env] : null;
+
+			if(env_config){
+				config = extend(config, env_config);
+			}
 		}
+
+		var yamlstring = fs.readFileSync(config_path, 'utf8');
+		var template = hogan.compile(yamlstring);
+
+		var yamloutput = template.render();
+
+	  var doc = yaml.safeLoad(yamloutput);
+
+	  for(var id in doc){
+	  	var config = doc[id];
+
+	  	/*
+	  	
+	  		warehouses begin with a slash
+	  		
+	  	*/
+	  	if(id.charAt(0)==='/'){
+	  		add_warehouse(id, config);
+	  	}
+	  	/*
+	  	
+	  		otherwise it's an app
+	  		
+	  	*/
+	  	else{
+	  		add_app(id, config);
+	  	}
+	  }
+
+	  add_warehouse = null;
+	  add_app = null;
+	  doc = null;
+
+	  done(null, {
+	  	application_root:application_root,
+	  	services:services,
+	  	reception:reception,
+	  	warehouses:warehouses,
+	  	apps:apps
+	  })
 	}
 
-	function add_app(id, config){
-		apps[id] = config;
-
-		var addservices = app_services(config);
-		for(var prop in addservices){
-			services[prop] = addservices[prop];
-		}
+	return {
+		load:run_load
 	}
 
-	var yamlstring = fs.readFileSync(config_path, 'utf8');
-
-  var doc = yaml.safeLoad(yamlstring);
-
-  for(var id in doc){
-  	var config = doc[id];
-
-  	/*
-  	
-  		warehouses begin with a slash
-  		
-  	*/
-  	if(id.charAt(0)==='/'){
-  		add_warehouse(id, config);
-  	}
-  	/*
-  	
-  		otherwise it's an app
-  		
-  	*/
-  	else{
-  		add_app(id, config);
-  	}
-  }
-
-  add_warehouse = null;
-  add_app = null;
-  doc = null;
-
-  return {
-  	application_root:application_root,
-  	services:services,
-  	reception:reception,
-  	warehouses:warehouses,
-  	apps:apps
-  }
 }

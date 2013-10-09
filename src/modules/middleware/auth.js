@@ -254,7 +254,7 @@ module.exports = function(config, $digger){
 
 					dbuser.attr(service + '_id', diggeruser.id);
 					dbuser.attr(service + '_user', diggeruser);
-					dbuser.attr(service + '_data', data);
+					//dbuser.attr(service + '_data', data);
 					dbuser.attr(service + '_tokens', {
 						token:packet.token,
 						refresh_token:packet.refresh_token
@@ -275,7 +275,7 @@ module.exports = function(config, $digger){
 						}
 						dbuser.attr(service + '_id', diggeruser.id);
 						dbuser.attr(service + '_user', diggeruser);
-						dbuser.attr(service + '_data', data);
+						//dbuser.attr(service + '_data', data);
 						dbuser.attr(service + '_tokens', {
 							token:packet.token,
 							refresh_token:packet.refresh_token

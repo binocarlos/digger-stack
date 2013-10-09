@@ -102,8 +102,6 @@ module.exports = function(application_root){
 		}
 
 		function add_app(id, config){
-			apps[id] = config;
-
 			var addservices = app_services(config);
 			for(var prop in addservices){
 				services[prop] = addservices[prop];
@@ -116,11 +114,15 @@ module.exports = function(application_root){
 			*/
 
 			var current_env = process.env.NODE_ENV;
-			var env_config = config.env ? config.env[current_env] : null;
+			var env = config.env;
+			delete(config.env);
+			var env_config = env ? env[current_env] : null;
 
 			if(env_config){
 				config = extend(config, env_config);
 			}
+
+			apps[id] = config;
 		}
 
 		var yamlstring = fs.readFileSync(config_path, 'utf8');

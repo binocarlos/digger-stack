@@ -20,7 +20,7 @@ var yaml = require('js-yaml');
 var wrench = require('wrench');
 var path = require('path');
 var hogan = require("hogan.js");
-var extend = require("xtend");
+var merge = require('merge-recursive');
 
 /*
 
@@ -107,30 +107,38 @@ module.exports = function(application_root){
 				services[prop] = addservices[prop];
 			}
 
-			/*
-			
-				check if there are overrides in the environment
-				
-			*/
-
-			var current_env = process.env.NODE_ENV;
-			var env = config.env;
-			delete(config.env);
-			var env_config = env ? env[current_env] : null;
-
-			if(env_config){
-				config = extend(config, env_config);
-			}
 
 			apps[id] = config;
 		}
 
 		var yamlstring = fs.readFileSync(config_path, 'utf8');
+
+		/*
+		
+			run via template
+			
+		*/
 		var template = hogan.compile(yamlstring);
 
 		var yamloutput = template.render();
-
 	  var doc = yaml.safeLoad(yamloutput);
+
+
+		/*
+		
+			check if there are overrides in the environment
+			
+		*/
+
+		var current_env = process.env.NODE_ENV;
+		var env = doc.env;
+		delete(doc.env);
+
+		var env_config = env ? env[current_env] : null;
+
+		if(env_config){
+			doc = merge.recursive(doc, env_config);
+		}
 
 	  for(var id in doc){
 	  	var config = doc[id];

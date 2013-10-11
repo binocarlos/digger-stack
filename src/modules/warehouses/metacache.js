@@ -20,10 +20,62 @@ var Warehouse = require('digger-warehouse');
 */
 module.exports = function(config, $digger){
 
-	$digger.radio.listen('*', function(){
-		console.log('-------------------------------------------');
-		console.log('-------------------------------------------');
-		console.log('META CACHE!!!');
+	$digger.radio.listen('*', function(channel, packet){
+		if(!packet){
+			return;
+		}
+
+		if(packet.action=='append'){
+
+			var all_info = {
+				tags:[],
+				classnames:[],
+				ids:[]
+			}
+
+			function recurse_container(container){
+				var digger = container._digger || {};
+
+				var info = {
+					tag:digger.tag,
+					classnames:digger.class,
+					id:digger.id
+				}
+
+				if(info.tag){
+					all_info.tags.push(info.tag);
+				}
+				if(info.classnames){
+					info.classnames.forEach(function(classname){
+						all_info.classnames.push(classname);
+					})
+				}
+				if(info.id){
+					all_info.ids.push(info.id);
+				}
+
+				(container._children || []).forEach(function(child){
+					recurse_container(child);
+				})
+			}
+
+			(packet.body || []).forEach(function(data){
+				recurse_container(data);
+			})
+
+			console.log('-------------------------------------------');
+			console.log('-------------------------------------------');
+			console.log('added map');
+			console.log(JSON.stringify(all_info, null, 4));
+
+		}
+		else if(packet.action=='save'){
+
+		}
+		else if(packet.action=='remove'){
+
+		}
+
 	})
 
 	var supplier = Warehouse();

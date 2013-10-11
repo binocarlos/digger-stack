@@ -39,7 +39,8 @@
     "merge-recursive": "0.0.3",
     "digger-ntp": "0.0.1",
     "redis": "~0.8.6",
-    "hiredis": "~0.1.15"
+    "hiredis": "~0.1.15",
+    "digger-supplier": "~0.1.7"
   },
   "devDependencies": {
     "mocha": "~1.12.0",

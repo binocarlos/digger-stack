@@ -119,6 +119,13 @@ function make_warehouse($digger, id){
         break;
       }
     }
+
+
+    /*
+    
+      RUN WAREHOUSE
+      
+    */
     if(hit){
       process.nextTick(function(){
         hit(req, function(error, answer){
@@ -254,6 +261,8 @@ function make_warehouse($digger, id){
 
   // loop our warehouses and build them
   warehouse_array.forEach(process_warehouse);
+
+  console.log('');
 
   var routes = [];
   for(var i in handlers){

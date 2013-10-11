@@ -13,6 +13,14 @@ module.exports = function(program){
 	var Runtime = require('./runtime');
 	var runtime = Runtime(program);
 	var stack_config = runtime.stack_config;
+  var Redis = require('redis');
+
+  var cache = Redis.createClient({
+      host:process.env.DIGGER_REDIS_HOST || '127.0.0.1',
+      port:process.env.DIGGER_REDIS_PORT || 6379,
+      pass:process.env.DIGGER_REDIS_PASSWORD || null,
+      prefix:'digger:cache'
+  })
 
 	// make a digger that flags requests as internal
 	// it then speaks to reception front door
@@ -21,6 +29,7 @@ module.exports = function(program){
     $digger.emit('digger:request', req, reply);
   });
 
+  $digger.cache = cache;
 	$digger.program = program;
 	$digger.runtime = runtime;
 	$digger.stack_config = stack_config;

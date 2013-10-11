@@ -64,7 +64,7 @@ function app_services(config){
 	};
 
 	// if the app has middleware - we assume they will want a redis cache
-	if(config.middleware && Object.keys(config.middleware).length>0){
+	if(config.handlers && Object.keys(config.handlers).length>0){
 		ret.redis = true;
 	}
 

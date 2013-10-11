@@ -5,7 +5,7 @@ module.exports = function(program, done){
 	var Config = require('./config');
 	var wrench = require('wrench');
 	var utils = require('digger-utils');
-
+  var async = require('async');
   var env = process.env.NODE_ENV;
 
 	var application_root = tools.application_root();
@@ -31,7 +31,11 @@ module.exports = function(program, done){
     we are building a digger application with a digger.yaml
     
   */
-  function build_digger(){
+  function build_digger(done){
+
+    // the things we might have to do before the end (like download git repos)
+    var asyncs = [];
+
     var stack_config_loader = Config(application_root);
 
     stack_config_loader.load(function(error, stack_config){
@@ -47,8 +51,29 @@ module.exports = function(program, done){
       }
 
       var allroutes = [];
+
+      /*
+      
+        WAREHOUSES
+        
+      */
       for(var warehousename in (stack_config.warehouses || {})){
         var app = stack_config.warehouses[warehousename];
+
+        /*
+        // we git clone the module
+        if(app.module.indexOf('.git')>0){
+
+          console.log('-------------------------------------------');
+          console.dir(app.module);
+          asyncs.push(function(nextasync){
+            console.log('-------------------------------------------');
+            console.log('-------------------------------------------');
+            console.log('DOWNLOADING GIT MODULE!!!');
+            nextasync
+          })
+        }
+        */
 
         allroutes.push(warehousename);
 
@@ -64,6 +89,11 @@ module.exports = function(program, done){
 
       var alldomains = [];
 
+      /*
+      
+        APPS
+        
+      */
       for(var i in (stack_config.apps || {})){
         var app = stack_config.apps[i];
 
@@ -87,6 +117,13 @@ module.exports = function(program, done){
       fs.writeFileSync(build_root + '/digger.json', JSON.stringify(stack_config, null, 4), 'utf8');
     })
 
+    if(asyncs){
+      async.parallel(asyncs, done);
+    }
+    else{
+      done && done();  
+    }
+    
     
   }
 
@@ -95,7 +132,7 @@ module.exports = function(program, done){
     for a folder that does not have a digger.yaml
     
   */
-  function build_app(){
+  function build_app(done){
     if(fs.existsSync(application_root + '/domains')){
       var domains = fs.readFileSync(application_root + '/domains', 'utf8');
       fs.writeFileSync(build_root + '/domains', (domains + "\n").replace(/\n\n$/, "\n"), 'utf8');      
@@ -117,9 +154,11 @@ module.exports = function(program, done){
     }
 
     fs.writeFileSync(build_root + '/nodes/all', 'node index.js', 'utf8');
+
+    done && done();
   }
 
-  is_digger ? build_digger() : build_app();
+  is_digger ? build_digger(done) : build_app(done);
 
   console.log('built: ' + application_root + '/.quarry');
 	

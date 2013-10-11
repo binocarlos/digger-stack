@@ -1,28 +1,28 @@
 
-function build_middleware($digger, modulename, middleware_config){
+function build_handler($digger, modulename, handler_config){
  /*
         
   	build the middleware
   	
   */
   return $digger.build(modulename, {
-    config:middleware_config
+    config:handler_config
   }, true);
 }
 
-function makemodule($digger, middleware_settings){
+function makemodule($digger, handler_settings){
 
   var fs = require('fs');
 
-  if(typeof(middleware_settings)==='string'){
-    middleware_settings = {
-      module:middleware_settings
+  if(typeof(handler_settings)==='string'){
+    handler_settings = {
+      module:handler_settings
     }
   }
 
-  var middleware_config = middleware_settings.config || {};
+  var handler_config = handler_settings.config || {};
   
-  var module = middleware_settings.module;
+  var module = handler_settings.module;
 
   if(!module){
     console.error('the middleware must define a module');
@@ -38,7 +38,7 @@ function makemodule($digger, middleware_settings){
   }
 
   if(!stat){
-    return build_middleware($digger, 'middleware/' + module, middleware_config);
+    return build_handler($digger, 'handlers/' + module, handler_config);
   }
   else if(stat.isDirectory()){
     var handlers = {};
@@ -49,7 +49,7 @@ function makemodule($digger, middleware_settings){
 
       if(file.match(/\.js$/)){
         var name = file.replace(/\.js/, '');
-        handlers[name] = build_middleware($digger, app_path + '/' + file, middleware_config);  
+        handlers[name] = build_handler($digger, app_path + '/' + file, handler_config);  
       }
 
       
@@ -61,25 +61,26 @@ function makemodule($digger, middleware_settings){
     }
   }
   else{
-    return build_middleware($digger, app_path, middleware_config);
+    return build_handler($digger, app_path, handler_config);
   }
 }
 
-function get_middleware_array($digger, middleware){
+function get_handler_array($digger, handlers){
   var utils = require('digger-utils');
   var stack = [];
 
-  for(var route in middleware){   
-    var fn = makemodule($digger, middleware[route]);
+  for(var route in handlers){
+
+    var fn = makemodule($digger, handlers[route]);
 
     // we have a collection of middleware indexed by filename
     if(fn.type=='folder'){
-      var handlers = fn.handlers;
+      var folderhandlers = fn.handlers;
       stack.push({
         route:route,
         fn:function(req, res, next){
           var file = req.url.replace(/^\//, '');
-          var handler = handlers[file];
+          var handler = folderhandlers[file];
           if(!handler){
             next();
           }
@@ -148,6 +149,10 @@ module.exports = function($digger, id){
     process.exit();
   }
 
+  console.log('');
+  console.log('   mounting websites');
+  console.log('');
+
 	/*
 	
 		mount the websites
@@ -156,7 +161,7 @@ module.exports = function($digger, id){
 	app_array.forEach(function(app_config){
 
     var domains = app_config.domains || [];
-    var middleware = get_middleware_array($digger, app_config.middleware);
+    var handlers = get_handler_array($digger, app_config.handlers);
 
     if(typeof(domains)==='string'){
       domains = [domains];
@@ -188,12 +193,22 @@ module.exports = function($digger, id){
       }))
     });
 
-    console.log('   document_root: ' + document_root);
+    var domainst = domains.map(function(d){
+      return '        ' + d;
+    }).join("\n");
+    
+    console.log('');
+    console.log('     document_root: ' + document_root);
+    console.log('');
+    console.log(domainst);
+    console.log('');
 
     // do we have custom js routes?
     var routes = app_config.routes;
 
     if(routes){
+
+      console.log('     routes: ' + routes);
 
       var routesfn = makemodule($digger, routes);
 
@@ -211,24 +226,29 @@ module.exports = function($digger, id){
       }
     }
 
+
     // mount digger.yaml middleware
-    middleware.forEach(function(warez){
+    handlers.forEach(function(handler){
 
       // this lets middleware look after their own mounting
       // this is for the auth module because it uses it's mount path internally
       // to derive the oauth callbacks
-      if(warez.fn._diggermount){
-        warez.fn._diggermount(app, warez.fn, warez.route);
+      if(handler.fn._diggermount){
+        handler.fn._diggermount(app, handler.fn, handler.route);
       }
       // this means we are mounting the middleware based on the route in the digger.yaml
       else{
-        app.use(warez.route, warez.fn);
+        app.use(handler.route, handler.fn);
       }
+
+      console.log('     handler: ' + handler.route);
     })
 
     app.use(app.router);
     app.use(diggerserver.express.static(document_root));
 	})
+
+  console.log('');
 
 	diggerserver.listen($digger.runtime.http_port, function(){
 		console.log('server listening: ' + $digger.runtime.http_port);

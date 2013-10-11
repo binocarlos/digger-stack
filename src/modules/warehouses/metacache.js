@@ -24,6 +24,11 @@ module.exports = function(config, $digger){
 	function remove_data(base_key, data, done){
 		var fns = [];
 
+		if(!data){
+			done();
+			return;
+		}
+
 		if(data.tag){
 			fns.push(function(next){
 				$digger.cache.zincrby(base_key + 'tag', -1, data.tag, next);

@@ -114,10 +114,16 @@ function make_reception($digger){
 
   // run a request back to warehouses
   reception.on('digger:request', function(req, reply){
-    if(!req.fromcontract){
-      logger.request(req);
-    }
-    run_request(req, reply);
+    
+    var start = new Date().getTime();
+    run_request(req, function(error, results){
+      var gap = new Date().getTime() - start;
+      reply(error, results);
+      if(!req.fromcontract){
+        req.gap = gap;
+        logger.request(req);
+      }  
+    });
   })
 
 

@@ -21,22 +21,6 @@ function logger(parts){
   console.log(parts.join("\t"));
 }
 
-function contract_summary(req){
-  var reqs = (req.body || []).map(function(req){
-    var headers = req.headers || {};
-    if(headers['x-json-selector']){
-      var selector = headers['x-json-selector'];
-      return selector.string;
-    }
-    else{
-      return null;
-    }
-  }).filter(function(req){
-    return req!==null;
-  })
-
-  return reqs.join('');
-}
 
 function reception_error_logger(req, error){
   var parts = [
@@ -108,8 +92,8 @@ function action_logger(type, req, resultcount){
   var parts = [
     new Date().getTime(),
     'action:' + type,
-    req.headers['x-supplier-route'] + req.url,
-    body.length + ' ' + tag + ' -> ' + data + ' -> ' + resultcount
+    req.headers['x-supplier-route'] + req.url//,
+    //body.length + ' ' + tag + ' -> ' + data + ' -> ' + resultcount
   ]
 
   logger(parts);
@@ -127,15 +111,34 @@ function symlink_logger(link){
   logger(parts);
 }
 
+function contract_summary(req){
+  var reqs = (req.body || []).map(function(req){
+    var headers = req.headers || {};
+    if(headers['x-json-selector']){
+      var selector = headers['x-json-selector'];
+      return selector.string;
+    }
+    else{
+      return null;
+    }
+  }).filter(function(req){
+    return req!==null;
+  })
+
+  return reqs.join('');
+}
+
+
 function request_logger(req){
   if(req.headers['x-reception']){
     return;
   }
   var parts = [
     new Date().getTime(),
-    'packet',
+    'request',
     req.method.toLowerCase(),
     req.url,
+    req.gap + 'ms',
     'body:' + (req.body ? req.body.length : 0)
   ]
 

@@ -279,7 +279,7 @@ module.exports = function(config, $digger){
 
 	supplier.on('select', function(req, reply){
 
-		var supplier_url = req.url;
+		var supplier_url = req.url.replace(/\/select$/, '');
 
 		if(!supplier_url){
 			return;
@@ -287,7 +287,9 @@ module.exports = function(config, $digger){
 
 		var base_key = supplier_url + '/';
 
-		var lists = {};
+		var lists = {
+			url:supplier_url
+		};
 		var fns = ['tag', 'class', 'id'].map(function(prop){
 			return function(nextfn){
 				$digger.cache.zrevrange(base_key + prop, 0, -1, function(error, list){

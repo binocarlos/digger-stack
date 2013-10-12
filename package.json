@@ -36,12 +36,12 @@
     "digger-radio": "~0.0.1",
     "ejs-locals": "~1.0.2",
     "hogan.js": "~2.0.0",
-    "merge-recursive": "0.0.3",
-    "digger-ntp": "0.0.1",
+    "merge-recursive": "~0.0.3",
+    "digger-ntp": "~0.0.1",
     "redis": "~0.8.6",
     "hiredis": "~0.1.15",
     "digger-supplier": "~0.1.7",
-    "digger-blueprints": "0.0.1"
+    "digger-blueprints": "~0.0.1"
   },
   "devDependencies": {
     "mocha": "~1.12.0",

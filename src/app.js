@@ -40,12 +40,14 @@ function makemodule($digger, handler_settings){
   try{
     var stat = fs.statSync(module);
   } catch (e){
+    console.log('-------------------------------------------');
+    console.log(e);
     stat = null;
   }
 
   
 
-  if(stat.isDirectory()){
+  if(stat && stat.isDirectory()){
 
     // a single node module
     if(fs.existsSync(module + '/package.json')){

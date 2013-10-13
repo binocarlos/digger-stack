@@ -29,6 +29,10 @@ function makemodule($digger, handler_settings){
     process.exit();
   }
 
+  if(module=='digger'){
+    return $digger.digger_middleware(handler_settings);
+  }
+  
   var app_path = $digger.filepath(module);
 
   try{

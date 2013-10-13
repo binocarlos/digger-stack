@@ -85,11 +85,7 @@ function get_handler_array($digger, handlers){
 
   for(var route in handlers){
 
-   var fn = makemodule($digger, handlers[route]);
-
-   console.log('-------------------------------------------');
-   console.dir(route);
-   console.dir(fn._diggermount);
+    var fn = makemodule($digger, handlers[route]);
 
     // we have a collection of middleware indexed by filename
     if(fn.type=='folder'){

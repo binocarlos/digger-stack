@@ -120,8 +120,14 @@ module.exports = function(application_root){
 		*/
 		var template = hogan.compile(yamlstring);
 
-		var yamloutput = template.render();
+		var yamloutput = template.render({
+			application_root:application_root,
+			build:application_root + '/.quarry'			
+		});
 	  var doc = yaml.safeLoad(yamloutput);
+
+	  //doc.application_root = application_root;
+	  //doc.build = application_root;
 
 
 		/*

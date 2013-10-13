@@ -112,8 +112,8 @@ module.exports = function($digger, id){
   var diggerserver = Serve();	
   var diggerapp = diggerserver.app;
 
-  $digger.digger_express = function(){
-    return diggerserver.digger_express.apply(diggerserver, utils.toArray(arguments));
+  $digger.digger_middleware = function(){
+    return diggerserver.digger_middleware.apply(diggerserver, utils.toArray(arguments));
   }
 
 	/*
@@ -173,7 +173,12 @@ module.exports = function($digger, id){
 
     var views = app_config.views;
 
-    var app = diggerserver.digger_application(domains, function(userapp){
+    /*
+    
+      create the user app
+      
+    */
+    var app = diggerserver.app_server(domains, function(userapp){
       
       var view_root = $digger.filepath(app_config.views);
 
@@ -246,6 +251,8 @@ module.exports = function($digger, id){
 
     app.use(app.router);
     app.use(diggerserver.express.static(document_root));
+
+    app.post_setup();
 	})
 
   console.log('');

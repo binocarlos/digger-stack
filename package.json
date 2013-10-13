@@ -1,6 +1,6 @@
 {
   "name": "digger-stack",
-  "version": "0.0.23",
+  "version": "0.0.24",
   "description": "A service map for a digger network",
   "main": "src/index.js",
   "scripts": {

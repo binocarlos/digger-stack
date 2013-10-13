@@ -105,7 +105,7 @@ module.exports = function(application_root){
 			}
 			// a local module
 			else if(module.match(/^\./)){
-				return path.normalize(application_root + '/' + module);
+				return module;
 			}
 			// an npm module in their package.json
 			else{

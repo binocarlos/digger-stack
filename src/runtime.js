@@ -30,6 +30,7 @@ module.exports = function(program){
   return {
     http_port:process.env.DIGGER_HTTP_PORT || 80,
     stack_config:stack_config,
+    application_root:application_root,
     filepath:function(filepath){
       if(!filepath){
         return filepath;

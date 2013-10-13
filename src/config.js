@@ -109,7 +109,7 @@ module.exports = function(application_root){
 			}
 			// an npm module in their package.json
 			else{
-				return module=='digger' ? module : application_root + '/node_modules/' + module;
+				return module=='digger' ? module : './node_modules/' + module;
 			}
 		}
 

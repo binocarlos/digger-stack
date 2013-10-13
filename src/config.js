@@ -99,7 +99,7 @@ module.exports = function(application_root){
 
 			// a github module - we download and npm install this
 			if(module.match(/^([\w-]+)\/([\w-]+)$/)){
-				gitrepos[module] = application_root + '/.quarry/gitmodules/' + module;
+				gitrepos[module] = './.quarry/gitmodules/' + module;
 				//moduleconfig
 				return gitrepos[module];
 			}

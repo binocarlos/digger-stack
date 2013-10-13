@@ -34,69 +34,19 @@ module.exports = build;
 	if the type is 'code' then we are loading code from the application folder
 	
 */
-function build($digger, module, moduleconfig, custom_module){
-	moduleconfig = moduleconfig || {};
-	config = moduleconfig.config || {};	
+function build($digger, module, moduleconfig){
 
-	var module_path = '';
-
-	if(custom_module){
-		module_path = module;
-
-		if(module.match(/[\/\.]/) && module.indexOf('/')!=0){
-			module_path = path.normalize(__dirname + '/modules/' + module + '.js');
-		}
-	}
-	else{
-		module_path = path.normalize(__dirname + '/modules/' + module + '.js');
-
-		/*
-		
-			is the module actually code in the digger app
-			
-		*/
-		if(module.match(/[\/\.]/)){
-			module_path = path.normalize($digger.application_root + '/' + module);
-			config._custommodule = module_path;
-			if(module_path.indexOf($digger.application_root)!=0){
-				console.error('error - you cannot load code from above your application: ' + module_path);
-				process.exit();
-			}
-		}
-		else{
-			config._systemmodule = module;
-		}
-
-		/*
-		
-			this means we have custom code but should load it inside of a warehouse module
-			
-		*/
-		if(moduleconfig._diggermodule){
-			module_path = path.normalize(__dirname + '/modules/' + moduleconfig._diggermodule + '.js')
-		}
-	}
-	
+	// the module is either in the codebase or was downloaded into the .quarry folder
+	var module_path = module.indexOf('./')==0 ? path.normalize($digger.application_root + '/' + module) : module;
 
 	if(!fs.existsSync(module_path)){
 		console.error(module_path + ' not found');
 		process.exit();
 	}
 
+	moduleconfig = moduleconfig || {};
+
 	var factory = require(module_path);
 
-	/*
-	
-		we pass the compile function to each module so they can include modules
-		from the application codebase
-		
-	*/
-	var pass_config = utils.extend({
-		id:moduleconfig.id
-	}, config);
-
-	// remove this or we get into a loop
-	delete(pass_config._diggermodule);
-	
-	return factory(pass_config, $digger);
+	return factory(moduleconfig.config || {}, $digger);
 }

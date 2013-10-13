@@ -24,6 +24,10 @@ function makemodule($digger, handler_settings){
   
   var module = handler_settings.module;
 
+  if(module.indexOf('.')==0){
+    module = $digger.filepath(module);
+  }
+
   if(!module){
     console.error('the middleware must define a module');
     process.exit();
@@ -33,39 +37,45 @@ function makemodule($digger, handler_settings){
     return $digger.digger_middleware(handler_settings);
   }
   
-  var app_path = $digger.filepath(module);
-
   try{
-    var stat = fs.statSync(app_path);
+    var stat = fs.statSync(module);
   } catch (e){
     stat = null;
   }
 
-  if(!stat){
-    return build_handler($digger, 'handlers/' + module, handler_config);
-  }
-  else if(stat.isDirectory()){
-    var handlers = {};
+  
 
-    var files = fs.readdirSync(app_path);
+  if(stat.isDirectory()){
 
-    files.forEach(function(file){
-
-      if(file.match(/\.js$/)){
-        var name = file.replace(/\.js/, '');
-        handlers[name] = build_handler($digger, app_path + '/' + file, handler_config);  
-      }
-
-      
-    })
-
-    return {
-      type:'folder',
-      handlers:handlers
+    // a single node module
+    if(fs.existsSync(module + '/package.json')){
+      return build_handler($digger, module, handler_config);
     }
+    // a folder of files
+    else{
+      var handlers = {};
+
+      var files = fs.readdirSync(module);
+
+      files.forEach(function(file){
+
+        if(file.match(/\.js$/)){
+          var name = file.replace(/\.js/, '');
+          handlers[name] = build_handler($digger, module + '/' + file, handler_config);  
+        }
+
+        
+      })
+
+      return {
+        type:'folder',
+        handlers:handlers
+      }
+    }
+    
   }
   else{
-    return build_handler($digger, app_path, handler_config);
+    return build_handler($digger, module, handler_config);
   }
 }
 
@@ -75,7 +85,11 @@ function get_handler_array($digger, handlers){
 
   for(var route in handlers){
 
-    var fn = makemodule($digger, handlers[route]);
+   var fn = makemodule($digger, handlers[route]);
+
+   console.log('-------------------------------------------');
+   console.dir(route);
+   console.dir(fn._diggermount);
 
     // we have a collection of middleware indexed by filename
     if(fn.type=='folder'){

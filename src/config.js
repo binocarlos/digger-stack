@@ -84,20 +84,51 @@ module.exports = function(application_root){
 		var apps = {};
 		var warehouses = {};
 		var reception = {};
+
+		// the github modules we need to download before booting
+		var gitrepos = {
+
+		};
+
+		// the docker containers the stack needs alongside nodes
 		var services = {
 			
 		};
+
+		function add_module(module){
+
+			// a github module - we download and npm install this
+			if(module.match(/^([\w-]+)\/([\w-]+)$/)){
+				gitrepos[module] = application_root + '/.quarry/gitmodules/' + module;
+				//moduleconfig
+				return gitrepos[module];
+			}
+			// a local module
+			else if(module.match(/^\./)){
+				return path.normalize(application_root + '/' + module);
+			}
+			// an npm module in their package.json
+			else{
+				return module=='digger' ? module : application_root + '/node_modules/' + module;
+			}
+		}
 
 		function add_warehouse(id, config){
 			if(id=='/reception'){
 				reception = config;
 			}
 			else{
+				if(typeof(config)=='string'){
+					config = {
+						module:config
+					}
+				}
 				warehouses[id] = config;
 				var addservices = warehouse_services(config);
 				for(var prop in addservices){
 					services[prop] = addservices[prop];
 				}
+				config.module = add_module(config.module);
 			}
 		}
 
@@ -107,6 +138,24 @@ module.exports = function(application_root){
 				services[prop] = addservices[prop];
 			}
 
+			/*
+			
+				loop handlers and process middleware & document_root for git downloads
+				
+			*/
+			if(config.handlers){
+				(Object.keys(config.handlers)).forEach(function(route){
+					var handler = config.handlers[route];
+
+					if(typeof(handler)==='string'){
+						config.handlers[route] = add_module(handler);
+					}
+					else{
+						handler.module = add_module(handler.module);
+					}
+
+				})
+			}
 
 			apps[id] = config;
 		}
@@ -124,6 +173,7 @@ module.exports = function(application_root){
 			application_root:application_root,
 			build:application_root + '/.quarry'			
 		});
+
 	  var doc = yaml.safeLoad(yamloutput);
 
 	  //doc.application_root = application_root;
@@ -173,6 +223,7 @@ module.exports = function(application_root){
 
 	  done(null, {
 	  	application_root:application_root,
+	  	gitrepos:gitrepos,
 	  	services:services,
 	  	reception:reception,
 	  	warehouses:warehouses,

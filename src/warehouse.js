@@ -145,7 +145,7 @@ function make_warehouse($digger, id){
     the module builder - $digger.build runs ./build
     
   */
-  function build_warehouse(route, modulename, warehouse_config){
+  function require_warehouse(route, modulename, warehouse_config){
     var handler = $digger.build(modulename, warehouse_config, true);
     
     if(modulename.match(/\.js/)){
@@ -244,17 +244,8 @@ function make_warehouse($digger, id){
   // the actual build step
   function process_warehouse(warehouse){
     var module = warehouse.module;
-    if(!module.match(/\./)){
-      // this means it is a core module
-      if(fs.existsSync(__dirname + '/modules/warehouses/' + module + '.js')){
-        module = 'warehouses/' + module;
-      }
-    }
-    else{
-      module = stack_config.application_root + '/' + module;
-    }
-
-    var warehouse_handler = build_warehouse(warehouse.id, module, warehouse);
+    
+    var warehouse_handler = require_warehouse(warehouse.id, module, warehouse);
 
     handlers[warehouse.id] = warehouse_handler;
   }

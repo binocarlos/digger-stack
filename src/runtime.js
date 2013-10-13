@@ -37,6 +37,9 @@ module.exports = function(program){
       if(filepath.charAt(0)==='/'){
         return path.normalize(filepath);
       }
+      if(filepath.indexOf(application_root)==0){
+        return filepath;
+      }
       return path.normalize(application_root + '/' + filepath);
     }
   }

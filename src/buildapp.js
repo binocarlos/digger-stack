@@ -4,6 +4,7 @@ module.exports = function(program, done){
 	var tools = require('./tools');
 	var Config = require('./config');
 	var wrench = require('wrench');
+  var child_process = require('child_process');
 	var utils = require('digger-utils');
   var async = require('async');
   var env = process.env.NODE_ENV;
@@ -26,6 +27,10 @@ module.exports = function(program, done){
     wrench.mkdirSyncRecursive(build_root + '/nodes', 0777);
   }
 
+  if(!fs.existsSync(build_root + '/gitmodules')){
+    wrench.mkdirSyncRecursive(build_root + '/gitmodules', 0777);
+  }
+
   /*
   
     we are building a digger application with a digger.yaml
@@ -44,11 +49,97 @@ module.exports = function(program, done){
         throw new Error(error);
       }
 
-      for(var servicename in (stack_config.services|| {})){
+      Object.keys(stack_config.gitrepos || {}).forEach(function(repo){
+        var parts = repo.split('/');
+        var username = parts[0];
+        var reponame = parts[1];
+
+        wrench.mkdirSyncRecursive(build_root + '/gitmodules/' + username, 0777);
+
+        asyncs.push(function(next){
+
+          console.log('-------------------------------------------');
+          console.log('here: ' + repo);
+
+          async.series([
+            function(nextseries){
+              console.log('-------------------------------------------');
+              console.log('cloning: ');
+              console.log('git clone https://github.com/' + repo + '.git');
+              console.log('cwd');
+              console.log(build_root + '/gitmodules/' + username);
+
+              var gitclone = child_process.spawn('git', ['clone', 'https://github.com/' + repo + '.git'], {
+                cwd:build_root + '/gitmodules/' + username
+              })
+              
+              gitclone.stdout.on('data', function (data) {
+                console.log('git clone: ' + data);
+              });
+
+              gitclone.stderr.on('data', function (data) {
+                console.log('git clone: ' + data);
+              });
+
+              gitclone.on('close', function (code) {
+                nextseries();
+              });
+
+            },
+
+            function(nextseries){
+
+              console.log('-------------------------------------------');
+              console.log('git pull');
+
+              var gitpull = child_process.spawn('git', ['pull'], {
+                cwd:build_root + '/gitmodules/' + repo
+              })
+              
+              gitpull.stdout.on('data', function (data) {
+                console.log('git pull: ' + data);
+              });
+
+              gitpull.stderr.on('data', function (data) {
+                console.log('git pull: ' + data);
+              });
+
+              gitpull.on('close', function (code) {
+                nextseries();
+              });
+            },
+
+            function(nextseries){
+
+              console.log('-------------------------------------------');
+              console.log('npm install');
+
+              var npminstall = child_process.spawn('npm', ['install'], {
+                cwd:build_root + '/gitmodules/' + repo
+              })
+              
+              npminstall.stdout.on('data', function (data) {
+                console.log('npm install: ' + data);
+              });
+
+              npminstall.stderr.on('data', function (data) {
+                console.log('npm install: ' + data);
+              });
+
+              npminstall.on('close', function (code) {
+                nextseries();
+              });
+            }
+          ], next)
+          
+        })
+      })
+      
+      Object.keys(stack_config.services|| {}).forEach(function(servicename){
         if(!fs.existsSync(build_root + '/services/' + servicename)){
           fs.writeFileSync(build_root + '/services/' + servicename, '', 'utf8');
         }
-      }
+      })
 
       var allroutes = [];
 
@@ -57,23 +148,9 @@ module.exports = function(program, done){
         WAREHOUSES
         
       */
-      for(var warehousename in (stack_config.warehouses || {})){
+      Object.keys(stack_config.warehouses || {}).forEach(function(warehousename){
+
         var app = stack_config.warehouses[warehousename];
-
-        /*
-        // we git clone the module
-        if(app.module.indexOf('.git')>0){
-
-          console.log('-------------------------------------------');
-          console.dir(app.module);
-          asyncs.push(function(nextasync){
-            console.log('-------------------------------------------');
-            console.log('-------------------------------------------');
-            console.log('DOWNLOADING GIT MODULE!!!');
-            nextasync
-          })
-        }
-        */
 
         allroutes.push(warehousename);
 
@@ -85,7 +162,7 @@ module.exports = function(program, done){
           fs.writeFileSync(build_root + '/nodes/' + nodename, 'digger warehouse ' + nodename, 'utf8');
         }
         */
-      }
+      })
 
       var alldomains = [];
 
@@ -94,7 +171,7 @@ module.exports = function(program, done){
         APPS
         
       */
-      for(var i in (stack_config.apps || {})){
+      Object.keys(stack_config.apps || {}).forEach(function(i){
         var app = stack_config.apps[i];
 
         (app.domains || []).forEach(function(domain){
@@ -107,7 +184,7 @@ module.exports = function(program, done){
           fs.writeFileSync(build_root + '/nodes/' + app.id, 'digger warehouse ' + nodename, 'utf8');
         }
         */
-      }
+      })
 
       // we want a blank line on the end because I am shit at bash scripts and it misses the last line
       alldomains.push('');
@@ -115,14 +192,16 @@ module.exports = function(program, done){
 
       fs.writeFileSync(build_root + '/nodes/all', 'digger run', 'utf8');
       fs.writeFileSync(build_root + '/digger.json', JSON.stringify(stack_config, null, 4), 'utf8');
+
+      if(asyncs){
+        async.series(asyncs, done);
+      }
+      else{
+        done && done();  
+      }
     })
 
-    if(asyncs){
-      async.parallel(asyncs, done);
-    }
-    else{
-      done && done();  
-    }
+    
     
     
   }
@@ -155,12 +234,13 @@ module.exports = function(program, done){
 
     fs.writeFileSync(build_root + '/nodes/all', 'node index.js', 'utf8');
 
+    console.log('built: ' + application_root + '/.quarry');
     done && done();
   }
 
   is_digger ? build_digger(done) : build_app(done);
 
-  console.log('built: ' + application_root + '/.quarry');
+  
 	
 
 }

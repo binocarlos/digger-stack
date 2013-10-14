@@ -115,6 +115,7 @@ module.exports = function(application_root){
 
 		function add_warehouse(id, config){
 			if(id=='/reception'){
+				config.id = '/reception';
 				reception = config;
 			}
 			else{
@@ -123,6 +124,7 @@ module.exports = function(application_root){
 						module:config
 					}
 				}
+				config.id = id;
 				warehouses[id] = config;
 				var addservices = warehouse_services(config);
 				for(var prop in addservices){
@@ -133,6 +135,7 @@ module.exports = function(application_root){
 		}
 
 		function add_app(id, config){
+			config.id = id;
 			var addservices = app_services(config);
 			for(var prop in addservices){
 				services[prop] = addservices[prop];
@@ -149,9 +152,13 @@ module.exports = function(application_root){
 
 					if(typeof(handler)==='string'){
 						config.handlers[route] = add_module(handler);
+						config.handlers[route].id = route;
 					}
 					else{
 						handler.module = add_module(handler.module);
+						handler.id = route;
+						handler.config = handler.config || {};
+						handler.config.id = route;
 					}
 
 				})

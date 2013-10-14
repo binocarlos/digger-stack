@@ -45,8 +45,6 @@ function makemodule($digger, handler_settings){
     stat = null;
   }
 
-  
-
   if(stat && stat.isDirectory()){
 
     // a single node module
@@ -107,9 +105,11 @@ function get_handler_array($digger, handlers){
       })
     }
     else{
+
       stack.push({
         route:route,
-        fn:fn
+        fn:fn.fn ? fn.fn : fn
+
       })
     }
     
@@ -212,6 +212,8 @@ module.exports = function($digger, id){
       userapp.use(less({
         src:document_root
       }))
+
+      userapp.use(diggerserver.express.favicon(document_root + '/favicon.ico'));
     });
 
     var domainst = domains.map(function(d){

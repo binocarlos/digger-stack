@@ -46,7 +46,11 @@ function build($digger, module, moduleconfig){
 
 	moduleconfig = moduleconfig || {};
 
+	var injectconfig = moduleconfig.config || {};
+
+//	injectconfig = moduleconfig.id;
+
 	var factory = require(module_path);
 
-	return factory(moduleconfig.config || {}, $digger);
+	return factory(injectconfig, $digger);
 }

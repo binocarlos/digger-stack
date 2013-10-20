@@ -35,6 +35,9 @@ module.exports = function(program){
 	$digger.stack_config = stack_config;
   $digger.application_root = runtime.application_root;
   $digger.filepath = runtime.filepath;
+  $digger.log = function(action, message){
+    $digger.emit('digger:log', action, message);
+  }
   $digger.build = function(){
     var args = utils.toArray(arguments);
     args.unshift(this);

@@ -128,16 +128,32 @@ function contract_summary(req){
   return reqs.join('');
 }
 
+function app_logger(action, message){
+  var parts = [
+    new Date().getTime(),
+    'request',
+    action,
+    message
+  ]
+
+  logger(parts);
+}
 
 function request_logger(req){
   if(req.headers['x-reception']){
     return;
   }
+
+  var url = req.url;
+
+  if(req.headers['x-supplier-route']){
+    url = req.headers['x-supplier-route'] + req.url;
+  }
   var parts = [
     new Date().getTime(),
     'request',
     req.method.toLowerCase(),
-    req.url,
+    url,
     req.gap + 'ms',
     'body:' + (req.body ? req.body.length : 0)
   ]
@@ -150,6 +166,7 @@ function request_logger(req){
 
 module.exports = {
   array:logger,
+  app:app_logger,
   error:error_logger,
   radio:radio_logger,
   reception_error:reception_error_logger,

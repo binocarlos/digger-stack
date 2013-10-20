@@ -46,7 +46,7 @@ function warehouse_services(config){
 		
 	};
 
-	if(config.module==='mongo'){
+	if(config.module=='digger-mongo'){
 		ret.mongo = true;
 	}
 

@@ -72,4 +72,8 @@ module.exports = function(program){
       logger.radio('talk', channel);
     }
   })
+
+  $digger.on('digger:log', function(action, message){
+    logger.app(action, message);
+  })
 }

@@ -131,7 +131,6 @@ function contract_summary(req){
 function app_logger(action, message){
   var parts = [
     new Date().getTime(),
-    'request',
     action,
     message
   ]

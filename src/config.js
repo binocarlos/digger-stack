@@ -178,7 +178,7 @@ module.exports = function(application_root){
 
 		var yamloutput = template.render({
 			application_root:application_root,
-			build:application_root + '/.quarry'			
+			build:application_root + '/.quarry'		
 		});
 
 	  var doc = yaml.safeLoad(yamloutput);

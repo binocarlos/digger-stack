@@ -121,7 +121,7 @@ function make_reception($digger){
       reply(error, results);
       if(!req.fromcontract){
         req.gap = gap;
-        logger.request(req);
+        logger.request(req, results);
       }  
     });
   })

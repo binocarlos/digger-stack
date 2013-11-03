@@ -138,7 +138,7 @@ function app_logger(action, message){
   logger(parts);
 }
 
-function request_logger(req){
+function request_logger(req, results){
   if(req.headers['x-reception']){
     return;
   }
@@ -159,6 +159,10 @@ function request_logger(req){
 
   if(req.headers['x-json-selector']){
     parts.push(req.headers['x-json-selector'].string);
+  }
+
+  if(results){
+    parts.push(results.length + ' results');
   }
   logger(parts);
 }

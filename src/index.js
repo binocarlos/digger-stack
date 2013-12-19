@@ -21,6 +21,7 @@ var util = require('util');
 
 var Reception = require('digger-reception');
 var Warehouse = require('digger-warehouse');
+var logger = require('./logger');
 
 /*
 
@@ -37,24 +38,34 @@ function Stack(options){
 	this.reception = Reception();
 	this.reception.on('digger:request', this.request.bind(this));
 	
+	// log errors
 	this.reception.on('digger:contract:error', function(req, error){
+		self.log(function(){
+			logger.reception_error(req, error);	
+		})
 		self.emit('digger:contract:error', req, error);
   })
 
   // log symlinks
   this.reception.on('digger:symlink', function(link){
+  	self.log(function(){
+			logger.symlink(link);
+		})
     self.emit('digger:contract:symlink', link);
   })
 
   // log results
   this.reception.on('digger:contract:results', function(req, count){
+  	self.log(function(){
+			logger.reception_results(req, count);	
+		})
     self.emit('digger:contract:results', req, count);
   })
 
   if(this.options.suppliers){
   	Object.keys(this.options.suppliers || {}).forEach(function(route){
   		var handler = self.options.suppliers[route];
-  		self.warehouse.use(route, handler);
+  		self.use(route, handler);
   	})
   }
 }
@@ -68,6 +79,9 @@ Stack.prototype.run_router = function(req, reply, next){
 	if(this.options.router){
 		this.options.router(req, function(error, answer){
       if(error){
+      	self.log(function(){
+      		logger.error(error);
+      	})
       	self.emit('digger:router:error', req, error);
       }
       reply(error, answer);
@@ -81,6 +95,7 @@ Stack.prototype.run_router = function(req, reply, next){
 Stack.prototype.request = function(req, reply){
 	var self = this;
 	var start = new Date().getTime();
+
   this.run_router(req, reply, function(){
   	self.warehouse(req, function(error, results){
   		var gap = new Date().getTime() - start;
@@ -88,9 +103,32 @@ Stack.prototype.request = function(req, reply){
 	    if(!req.fromcontract){
 	      req.gap = gap;
 	      self.emit('digger:request:results', req, results);
+	      self.log(function(){
+	      	logger.request(req, results);	
+	      })
+	      
 	    }
   	}, function(){
   		reply('404:no route found');
   	})
   });
+}
+
+Stack.prototype.log = function(fn){
+	if(this.options.log!=false){
+		fn();
+	}
+}
+
+Stack.prototype.use = function(route, handler){
+
+	this.warehouse.use(route, function(req, res){
+		req.headers['x-supplier-route'] = route;
+    req.url = req.url.substr(route.length);
+    if((req.url || '').length<=0){
+    	req.url = '/';
+    }
+    handler(req, res);
+	})
+
 }

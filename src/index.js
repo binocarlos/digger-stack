@@ -50,6 +50,13 @@ function Stack(options){
   this.reception.on('digger:contract:results', function(req, count){
     self.emit('digger:contract:results', req, count);
   })
+
+  if(this.options.suppliers){
+  	Object.keys(this.options.suppliers || {}).forEach(function(route){
+  		var handler = self.options.suppliers[route];
+  		self.warehouse.use(route, handler);
+  	})
+  }
 }
 
 util.inherits(Stack, EventEmitter);

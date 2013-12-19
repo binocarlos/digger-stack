@@ -8,13 +8,14 @@ describe('stack', function(){
 			router:function(req, reply, next){
 				status.router = true;
 				next();
+			},
+			suppliers:{
+				"/apples":function(req, reply){
+					reply(null, [{
+						name:'apples'
+					}])
+				}
 			}
-		})
-
-		stack.warehouse.use('/apples', function(req, reply){
-			reply(null, [{
-				name:'apples'
-			}])
 		})
 
 		stack.reception({

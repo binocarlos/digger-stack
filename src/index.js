@@ -124,7 +124,6 @@ Stack.prototype.use = function(route, handler){
 
 	this.warehouse.use(route, function(req, res){
 		req.headers['x-supplier-route'] = route;
-    req.url = req.url.substr(route.length);
     if((req.url || '').length<=0){
     	req.url = '/';
     }

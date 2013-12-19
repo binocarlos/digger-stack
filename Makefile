@@ -1,24 +1,11 @@
-TESTS = test/*.js
-REPORTER = spec
-#REPORTER = dot
-
-check: test
-
 test:
+	@echo server test
 	@NODE_ENV=test ./node_modules/.bin/mocha \
-		--reporter $(REPORTER) \
+		--reporter spec \
 		--timeout 300 \
 		--require should \
 		--growl \
-		$(TESTS)
-
-browserify:
-	browserify src/index.js > build/container.js
-
-uglify: browserify
-	uglifyjs build/container.js > build/container.min.js
-
-build: uglify
+		test/test.js
 
 install:
 	npm install

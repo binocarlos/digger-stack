@@ -112,6 +112,10 @@ function symlink_logger(link){
 }
 
 function contract_summary(req){
+
+  if(!req || !req.body || !req.body.length){
+    return;
+  }
   var reqs = (req.body || []).map(function(req){
     var headers = req.headers || {};
     if(headers['x-json-selector']){
